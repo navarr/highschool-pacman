@@ -1,0 +1,237 @@
+<html>
+<head>
+<title>The Awesome Game</title>
+<script type="text/javascript">
+	window.score = 0;
+
+	makeBaseMap(25,10);
+	
+	makeYWall(10,1,25);
+	makeXWall(1,1,10);
+	makeYWall(1,1,25);
+	makeXWall(25,1,10);
+
+	makeYWall(6,5,7);
+	makeXWall(5,4,6);
+	makeXWall(7,4,6);
+
+	makeItem("candy.png",6,5,function()
+	{
+		(new Audio("death.mp3")).play();
+		alert('The Candy is a Lie.');
+		makeXWall(6,4,4);
+		window.map[6][5]["do"] = function() { return true; }
+	});
+
+	makeItem("ball.png",5,8,function() { getEats(5,8); });
+	makeItem("ball.png",6,8,function() { getEats(6,8); });
+	makeItem("ball.png",7,8,function() { getEats(7,8); });
+	function makeBaseMap(x,y)
+	{
+		window.tx = x;
+		window.ty = y;
+		window.map = new Array;
+		for(var a = 1;a <= window.tx;a++)
+		{
+			window.map[a] = new Array;
+			for(var b = 1;b <= window.ty;b++)
+			{
+				window.map[a][b] = new Array;
+			}
+		}
+	}
+	function renderMap(ele,x,y)
+	{
+		window.x = x;
+		window.y = y;
+		var html = '';
+		var b = 0;
+		html = "<table>";
+		while(b < window.ty)
+		{
+			b = b + 1;
+			html = html + "<tr>";
+			var a = 0;
+			while(a < window.tx)
+			{
+				a = a + 1;
+				html = html + "<td id=\"n" + b + 'p' + a + "\" class=\"zero\"></td>";
+			}
+			html = html + "</tr>";
+		}
+		html = html + "</table>";
+		ele.innerHTML = html;
+		document.getElementById('n' + window.y+'p' + window.x+'').className = "one";
+		loadMap();
+	}
+	function makeYWall(y,xs,xe)
+	{
+		for (var a = xs;a <= xe;a++)
+		{
+			window.map[a][y]["img"] = "wall.png";
+			window.map[a][y]["type"] = "wall";
+		}
+	}
+	function makeXWall(x,ys,ye)
+	{
+		for(var a = ys;a <= ye;a++)
+		{
+			window.map[x][a]["img"] = "wall.png";
+			window.map[x][a]["type"] = "wall";
+		}
+	}
+	function makeItem(iImg,iX,iY,DO)
+	{
+		if (!DO)
+		{
+			var DO = function() { return true; }
+		}
+		window.map[iX][iY]["img"] = iImg;
+		window.map[iX][iY]["type"] = "item";
+		window.map[iX][iY]["do"] = DO;
+	}
+	function loadMap()
+	{
+		var map = window.map;
+		for (var a = 1;a <= window.tx;a++)
+		{
+			if (map[a])
+			{
+				for (var b = 1;b <= window.ty;b++)
+				{
+					if (a == 1) {
+					}
+					if (map[a][b])
+					{
+						if (map[a][b]["img"])
+						{
+							document.getElementById('n' + b + 'p' + a).style.backgroundImage = "url('" + map[a][b]["img"] + "')";
+						}
+					}
+				}
+			}
+		}
+		
+	}
+	function getEats(X,Y)
+	{
+		window.score++;
+		updateScore();
+		window.map[X][Y]["do"] = function() { return true; }
+	}
+	function updateScore()
+	{
+		ele = document.getElementById('score');
+		ele.innerHTML = window.score;
+	}
+	document.onkeydown = function(e) { keyHandle(e); }
+	function keyHandle(e)
+	{
+		var evt = e || window.event;
+		var dir = '';
+		if (evt.keyCode == 37) { dir = 'l'; }
+		if (evt.keyCode == 38) { dir = 'u'; }
+		if (evt.keyCode == 39) { dir = 'r'; }
+		if (evt.keyCode == 40) { dir = 'd'; }
+		moveWith(dir);
+	}
+	function moveWith(dir)
+	{
+		var nx = window.x;
+		var ny = window.y;
+		if (dir == "r")
+		{
+			if ((window.x + 1) <= window.tx)
+			{
+				nx = window.x + 1;
+			}
+		}
+		else if (dir == "d")
+		{
+			if ((window.y + 1) <= window.ty)
+			{
+				ny = window.y + 1;
+			}
+		}
+		else if (dir == "u")
+		{
+			if ((window.y - 1) >= 1)
+			{
+				ny = window.y - 1;
+			}
+		}
+		else if (dir == "l")
+		{
+			if ((window.x - 1) >= 1)
+			{
+				nx = window.x - 1;
+			}
+		} 
+		else
+		{
+			return false;
+		}
+		if (window.map[nx] && window.map[nx][ny])
+		{
+			if (window.map[nx][ny]["type"])
+			{
+				if (window.map[nx][ny]["type"] == "wall")
+				{
+					return false;
+				}
+				else
+				{
+					/* Continue */
+				}
+			}
+			if (window.map[nx][ny]["do"])
+			{
+				window.map[nx][ny]["do"]();
+			}
+		}
+		document.getElementById('n' + window.y+'p' + window.x+'').style.backgroundImage = "url('pacman-" + dir + ".png')";
+		if (window.map[window.x] && window.map[window.x][window.y] && (window.map[window.x][window.y]["img"]))
+		{
+			if (window.map[window.x][window.y]["type"] && window.map[window.x][window.y]["type"] != "item")
+			{
+				document.getElementById('n' + window.y+'p' + window.x+'').className = "zero";
+				document.getElementById('n' + window.y+'p' + window.x+'').style.backgroundImage = "url('" + window.map[window.x][window.y]["img"] + "')";
+			}
+			else
+			{
+				document.getElementById('n' + window.y+'p' + window.x+'').className = "zero";
+				document.getElementById('n' + window.y+'p' + window.x+'').style.backgroundImage = "none";
+			}
+		}
+		else
+		{
+			document.getElementById('n' + window.y+'p' + window.x+'').className = "zero";
+			document.getElementById('n' + window.y+'p' + window.x+'').style.backgroundImage = "none";
+		}
+		window.x = nx;
+		window.y = ny;
+		document.getElementById('ix').value = window.x;
+		document.getElementById('iy').value = window.y;
+		document.getElementById('id').value = 'n' + window.y+'p' + window.x+'';
+		document.getElementById('n' + window.y+'p' + window.x+'').className = "one";
+		document.getElementById('n' + window.y+'p' + window.x+'').style.backgroundImage = "url('pacman-" + dir + ".png')";
+	}
+</script>
+<style type="text/css">
+ table,tr,td { border: 0px; border-collapse: collapse; }
+ td { width: 25px; height: 25px; text-align: center; }
+ .zero { background-color: black;background-image:none;background-repeat:no-repeat; }
+ .one { background-color: black;background-image:url('pacman-r.png');background-repeat:no-repeat;background-position:center; }
+</style>
+</head>
+<body onload="renderMap(document.getElementById('body'),6,7);">
+X: <input type="text" id="ix" /> Y: <input type="text" id="iy" /> ID: <input type="text" id="id" />
+<div id="body"></div>
+<div id="i1">
+<span>Inventory:</span> <span>Score:</span><span id="score"></span>
+<div id="items">
+
+</div>
+</div>
+</body>
+</html>
